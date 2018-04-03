@@ -23,4 +23,6 @@ image=urllib.request.urlretrieve(url_string,file_name)
 
 #print(image)
 image1=cv2.imread(file_name)
-print(cv2.imshow('image',image1))
+cv2.imshow('image',image1)
+cv2.waitKey(0)
+cv2.destroyWindow('image')

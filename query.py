@@ -4,7 +4,7 @@ import numpy
 import logging
 import shutil
 import cv2
-import quadkey as quad
+import main as quad
 
 
 base='http://h0.ortho.tiles.virtualearth.net/tiles/h'

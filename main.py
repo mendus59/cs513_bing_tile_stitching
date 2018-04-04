@@ -1,6 +1,8 @@
 import math
 import urllib.request
 import cv2
+import sys
+import numpy as np
 
 API_KEY = 'AoUQkcATQUN_lbITFwS4MnNLnxsSdx1gULgee1cIHoqcB8zOp-8se-3fEKzY05po'
 
@@ -105,4 +107,27 @@ def get_tile_matrix(minLat, minLon, maxLat, maxLon, level=14):
     
     return tile_matrix
 
-print(get_tile_matrix(49.00000,85.00000,49.00100,85.00100, 18))
+# Direction, 0 for vertical, 1 for horizontal
+def stitch(img_name1, img_name2, direction):
+    img1 = cv2.imread(img_name1)
+    img2 = cv2.imread(img_name2)
+    concat = np.concatenate((img1, img2), axis=direction)
+    return concat
+
+def stitch_image_matrix(matrix):
+    cat1 = stitch(matrix[0][4], matrix[0][2], 0)
+    cv2.imwrite('cat1.jpeg', cat1)
+    col1 = stitch('cat1.jpeg', matrix[0][0], 0)
+    cv2.imwrite('col1.jpeg', col1)
+    cat2 = stitch(matrix[1][4], matrix[1][2], 0)
+    cv2.imwrite('cat2.jpeg', cat2)
+    col2 = stitch('cat2.jpeg', matrix[1][0], 0)
+    cv2.imwrite('col2.jpeg', col2)
+    out = stitch('col1.jpeg', 'col2.jpeg', 1)
+    cv2.imwrite('out.jpeg', out)
+
+testminlat = 41.9086744
+testminlon = -87.6818312
+testmaxlat = 41.8097234
+testmaxlon = -87.6023627
+stitch_image_matrix(get_tile_matrix(testminlat, testminlon, testmaxlat, testmaxlon, 13))

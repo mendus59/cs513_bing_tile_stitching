@@ -49,7 +49,7 @@ Coordinate Calculations from https://msdn.microsoft.com/en-us/library/bb259689.a
     tileY = floor(pixelY / 256)
 '''
 
-def pixel_coord(lat,lon,level=14):
+def pixel_coord(lat,lon,level):
     lat_pix=float(lat)
     lon_pix=float(lon)
     matrix_size=2**(8+level)
@@ -61,7 +61,7 @@ def pixel_coord(lat,lon,level=14):
     lon_calc=360*pix_x
     return int(lat_calc),int(lon_calc)
 
-def get_tile_coord(lat, lon, level=14):
+def get_tile_coord(lat, lon, level):
     sinLatitude = math.sin(lat * math.pi/180)
     pixelX = ((lon + 180) / 360) * 256 * math.pow(2, level)
     pixelY = (0.5 - math.log((1 + sinLatitude) / (1 - sinLatitude)) / (4 * math.pi)) * 256 * math.pow(2, level)
@@ -70,7 +70,7 @@ def get_tile_coord(lat, lon, level=14):
     tile_coord = calc_quad_key(tileX, tileY, level)
     return tile_coord
 
-def get_tile(lat, lon, level=14):
+def get_tile(lat, lon, level):
     base_url = 'http://h0.ortho.tiles.virtualearth.net/tiles/h'
     end_url = '.jpeg?g=131'
     tile_coord = get_tile_coord(lat, lon, level)
@@ -85,7 +85,8 @@ def print_image(file_name):
     cv2.waitKey(0)
     cv2.destroyWindow('image')
 
-def get_tile_matrix(minLat, minLon, maxLat, maxLon, level=14):
+def get_tile_matrix(minLat, minLon, maxLat, maxLon, level):
+    print(level)
     lat_tiles_at_level = 180/math.pow(2, level)
     lon_tiles_at_level = 360/math.pow(2, level)
     lat_diff = abs(maxLat - minLat)
@@ -95,16 +96,24 @@ def get_tile_matrix(minLat, minLon, maxLat, maxLon, level=14):
     m_size = math.ceil(lon_diff / lon_tiles_at_level)
     lat_per_tile = lat_diff / n_size
     lon_per_tile = lon_diff / m_size
-    tile_matrix = [[0 for m in range(n_size)] for m in range(m_size)]
 
+    print(lat_tiles_at_level, lat_diff, n_size, lat_per_tile)
+
+    tile_matrix = [[0 for m in range(n_size)] for m in range(m_size)]
     currentLon = minLon
     for n in range(0, m_size):
         currentLat = minLat
         for m in range(0, n_size):
             tile_matrix[n][m] = get_tile(currentLat, currentLon, level)
-            currentLat += lat_per_tile
-        currentLon += lon_per_tile
-    
+            if minLat - maxLat < 0:
+                currentLat += lat_per_tile
+            else:
+                currentLat -= lat_per_tile
+        if minLon - maxLon < 0:
+            currentLon += lon_per_tile
+        else:
+            currentLon -= lon_per_tile
+    print(tile_matrix)
     return tile_matrix
 
 # Direction, 0 for vertical, 1 for horizontal
@@ -115,13 +124,13 @@ def stitch(img_name1, img_name2, direction):
     return concat
 
 def stitch_image_matrix(matrix):
-    cat1 = stitch(matrix[0][4], matrix[0][2], 0)
+    cat1 = stitch(matrix[0][0], matrix[0][2], 0)
     cv2.imwrite('cat1.jpeg', cat1)
-    col1 = stitch('cat1.jpeg', matrix[0][0], 0)
+    col1 = stitch('cat1.jpeg', matrix[0][4], 0)
     cv2.imwrite('col1.jpeg', col1)
-    cat2 = stitch(matrix[1][4], matrix[1][2], 0)
+    cat2 = stitch(matrix[1][0], matrix[1][2], 0)
     cv2.imwrite('cat2.jpeg', cat2)
-    col2 = stitch('cat2.jpeg', matrix[1][0], 0)
+    col2 = stitch('cat2.jpeg', matrix[1][4], 0)
     cv2.imwrite('col2.jpeg', col2)
     out = stitch('col1.jpeg', 'col2.jpeg', 1)
     cv2.imwrite('out.jpeg', out)

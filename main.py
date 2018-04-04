@@ -87,29 +87,46 @@ def print_image(file_name):
     cv2.waitKey(0)
     cv2.destroyWindow('image')
 
+def get_tile_matrix(minLat, minLon, maxLat, maxLon, level=14):
+    lat_tiles_at_level = 180/math.pow(2, level)
+    lon_tiles_at_level = 360/math.pow(2, level)
+    lat_diff = abs(maxLat - minLat)
+    lon_diff = abs(maxLon - minLon)
+    # Create an n x m matrix where n is number of lat tiles and m is number of lon tiles
+    n_size = math.ceil(lat_diff / lat_tiles_at_level)
+    m_size = math.ceil(lon_diff / lon_tiles_at_level)
+    lat_per_tile = lat_diff / n_size
+    lon_per_tile = lon_diff / m_size
+    tile_matrix = [[0 for n in range(n_size)] for m in range(m_size)]
 
-def get_tile_matrix(lat1, lon1, lat2, lon2,size=12):
-    lat1, lat2 = min(lat1, lat2), max(lat1, lat2)
-    lon1, lon2 = min(lon1, lon2), max(lon1, lon2)
-    x1, y1 = pixel_coord(lat1, lon1)
-    x2, y2 = pixel_coord(lat2, lon2)
-    x_range=lat2-lat1
-    y_range=lon2-lon1
-    size_x=x_range/size
-    print(x_range,size_x)
-    size_y=y_range/size
-    x_rng = np.linspace(x1, x2 + 1, size)
-    y_rng = np.linspace(y1, y2 + 1, size)
+    currentLon = minLon
+    for n in range(0, n_size):
+        currentLat = minLat
+        for m in range(0, m_size):
+            tile_matrix[n][m] = get_tile(currentLat, currentLon, level)
+            currentLat += lat_per_tile
+        currentLon += lon_per_tile
+    
+    return tile_matrix
+
+# def get_tile_matrix(lat1, lon1, lat2, lon2,size=12):
+#     lat1, lat2 = min(lat1, lat2), max(lat1, lat2)
+#     lon1, lon2 = min(lon1, lon2), max(lon1, lon2)
+#     x1, y1 = pixel_coord(lat1, lon1)
+#     x2, y2 = pixel_coord(lat2, lon2)
+#     x_range=lat2-lat1
+#     y_range=lon2-lon1
+#     size_x=x_range/size
+#     print(x_range,size_x)
+#     size_y=y_range/size
+#     x_rng = np.linspace(x1, x2 + 1, size)
+#     y_rng = np.linspace(y1, y2 + 1, size)
     
     
-    xy_pairs = itertools.product(x_rng, y_rng) 
-    #return(xy_pairs)
-    return[get_tile_coord(x, y) for x,y in xy_pairs], (len(x_rng), len(y_rng))
+#     xy_pairs = itertools.product(x_rng, y_rng) 
+#     #return(xy_pairs)
+#     return[get_tile_coord(x, y) for x,y in xy_pairs], (len(x_rng), len(y_rng))
 
 
 
-#(xy_sample,(a,b))=get_tile_matrix(49.00000,85.00000,49.00100,85.00100)
-
-#for xy_samples, possible_values in xy_sample.items():
-    #print(xy_samples,possible_values)
-#print_image(get_tile(41.832482, -87.615588))
+print(get_tile_matrix(49.00000,85.00000,49.00100,85.00100, 18))

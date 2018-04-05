@@ -48,19 +48,6 @@ Coordinate Calculations from https://msdn.microsoft.com/en-us/library/bb259689.a
     tileX = floor(pixelX / 256)
     tileY = floor(pixelY / 256)
 '''
-
-def pixel_coord(lat,lon,level):
-    lat_pix=float(lat)
-    lon_pix=float(lon)
-    matrix_size=2**(8+level)
-
-    pix_x=min(lat_pix,0,matrix_size-1)-0.5
-    pix_y=0.5-min(lon_pix,0,matrix_size-1)
-
-    lat_calc=90-360*math.atan(math.exp(-pix_y*2*math.pi))/math.pi
-    lon_calc=360*pix_x
-    return int(lat_calc),int(lon_calc)
-
 def get_tile_coord(lat, lon, level):
     sinLatitude = math.sin(lat * math.pi/180)
     pixelX = ((lon + 180) / 360) * 256 * math.pow(2, level)
@@ -86,19 +73,20 @@ def print_image(file_name):
     cv2.destroyWindow('image')
 
 def get_tile_matrix(minLat, minLon, maxLat, maxLon, level):
+    # Determine the number of degrees per tile at a given level
     lat_tiles_at_level = 180/math.pow(2, level)
     lon_tiles_at_level = 360/math.pow(2, level)
     lat_diff = abs(maxLat - minLat)
     lon_diff = abs(maxLon - minLon)
+
     # Create an n x m matrix where n is number of lat tiles and m is number of lon tiles
     n_size = math.ceil(lat_diff / lat_tiles_at_level)
     m_size = math.ceil(lon_diff / lon_tiles_at_level)
     lat_per_tile = lat_diff / n_size
     lon_per_tile = lon_diff / m_size
-
-    print(lat_tiles_at_level, lat_diff, n_size, lat_per_tile)
-
     tile_matrix = [[0 for m in range(n_size)] for m in range(m_size)]
+
+    # Populate the matrix with tiles
     currentLon = minLon
     for n in range(0, m_size):
         currentLat = minLat
@@ -116,6 +104,7 @@ def get_tile_matrix(minLat, minLon, maxLat, maxLon, level):
 
 def filter_matrix(matrix):
     matrix_rows = len(matrix)
+    # Remove duplicate column entries per row
     for i in range(0, matrix_rows):
         row = set()
         new_matrix_row = []
@@ -124,19 +113,14 @@ def filter_matrix(matrix):
                 row.add(item)
                 new_matrix_row.append(item)
         matrix[i] = new_matrix_row
+    # Remove duplicate rows
     for i in range(0, matrix_rows-1):
         if i < len(matrix)-1:
             if matrix[i][0] == matrix[i+1][0]:
                 del matrix[i]
     return(matrix)
 
-# Direction, 0 for vertical, 1 for horizontal
-def stitch(img_name1, img_name2, direction):
-    img1 = cv2.imread(img_name1)
-    img2 = cv2.imread(img_name2)
-    concat = np.concatenate((img1, img2), axis=direction)
-    return concat
-
+# For np.concatenate direction, 0 for vertical, 1 for horizontal
 def stitch_image_matrix(matrix):
     matrix_rows = len(matrix)
     image_row = []
@@ -149,19 +133,17 @@ def stitch_image_matrix(matrix):
     cv2.imwrite('output.jpeg', final_image)
 
 def main():
-    # testminlat = 41.9086744
-    # testminlon = -87.6818312
-    # testmaxlat = 41.8097234
-    # testmaxlon = -87.6023627
-    testminlat = 41.863771
-    testminlon = -87.618410
-    testmaxlat = 41.860802
-    testmaxlon = -87.614784
+    # Takes 5 arguments in the form minLat minLon maxLat maxLon level
+    # python main.py 41.9086744 -87.6818312 41.8097243 -87.6023617 14
 
-    matrix = get_tile_matrix(testminlat, testminlon, testmaxlat, testmaxlon, 19)
-    print(matrix)
+    minLat = float(sys.argv[1])
+    minLon = float(sys.argv[2])
+    maxLat = float(sys.argv[3])
+    maxLon = float(sys.argv[4])
+    level = float(sys.argv[5])
+
+    matrix = get_tile_matrix(minLat, minLon, maxLat, maxLon, level)
     filtered_matrix = filter_matrix(matrix)
-    print(filtered_matrix)
     stitch_image_matrix(filtered_matrix)
 
 

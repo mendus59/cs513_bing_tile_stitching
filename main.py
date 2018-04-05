@@ -116,6 +116,18 @@ def get_tile_matrix(minLat, minLon, maxLat, maxLon, level):
     print(tile_matrix)
     return tile_matrix
 
+def filter_matrix(matrix):
+    matrix_rows = len(matrix)
+    for i in range(0, matrix_rows):
+        row = set()
+        new_matrix_row = []
+        for item in matrix[i]:
+            if item not in row:
+                row.add(item)
+                new_matrix_row.append(item)
+        matrix[i] = new_matrix_row
+    return(matrix)
+
 # Direction, 0 for vertical, 1 for horizontal
 def stitch(img_name1, img_name2, direction):
     img1 = cv2.imread(img_name1)
@@ -124,19 +136,28 @@ def stitch(img_name1, img_name2, direction):
     return concat
 
 def stitch_image_matrix(matrix):
-    cat1 = stitch(matrix[0][0], matrix[0][2], 0)
-    cv2.imwrite('cat1.jpeg', cat1)
-    col1 = stitch('cat1.jpeg', matrix[0][4], 0)
-    cv2.imwrite('col1.jpeg', col1)
-    cat2 = stitch(matrix[1][0], matrix[1][2], 0)
-    cv2.imwrite('cat2.jpeg', cat2)
-    col2 = stitch('cat2.jpeg', matrix[1][4], 0)
-    cv2.imwrite('col2.jpeg', col2)
-    out = stitch('col1.jpeg', 'col2.jpeg', 1)
-    cv2.imwrite('out.jpeg', out)
+    matrix_rows = len(matrix)
+    image_row = []
+    for i in range(0, matrix_rows):
+        image_col = []
+        for item in matrix[i]:
+            image_col.append(cv2.imread(item))
+        image_row.append(np.concatenate(image_col, 0))
+    final_image = np.concatenate(image_row, 1)
+    cv2.imwrite('output.jpeg', final_image)
 
-testminlat = 41.9086744
-testminlon = -87.6818312
-testmaxlat = 41.8097234
-testmaxlon = -87.6023627
-stitch_image_matrix(get_tile_matrix(testminlat, testminlon, testmaxlat, testmaxlon, 13))
+def main():
+    testminlat = 41.9086744
+    testminlon = -87.6818312
+    testmaxlat = 41.9097234
+    testmaxlon = -87.6823627
+    # testmaxlat = 41.8097234
+    # testmaxlon = -87.6023627
+
+    matrix = get_tile_matrix(testminlat, testminlon, testmaxlat, testmaxlon, 19)
+    filtered_matrix = filter_matrix(matrix)
+    stitch_image_matrix(filtered_matrix)
+
+
+if __name__ == '__main__':
+    main()

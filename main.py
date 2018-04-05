@@ -86,7 +86,6 @@ def print_image(file_name):
     cv2.destroyWindow('image')
 
 def get_tile_matrix(minLat, minLon, maxLat, maxLon, level):
-    print(level)
     lat_tiles_at_level = 180/math.pow(2, level)
     lon_tiles_at_level = 360/math.pow(2, level)
     lat_diff = abs(maxLat - minLat)
@@ -113,7 +112,6 @@ def get_tile_matrix(minLat, minLon, maxLat, maxLon, level):
             currentLon += lon_per_tile
         else:
             currentLon -= lon_per_tile
-    print(tile_matrix)
     return tile_matrix
 
 def filter_matrix(matrix):
@@ -126,6 +124,10 @@ def filter_matrix(matrix):
                 row.add(item)
                 new_matrix_row.append(item)
         matrix[i] = new_matrix_row
+    for i in range(0, matrix_rows-1):
+        if i < len(matrix)-1:
+            if matrix[i][0] == matrix[i+1][0]:
+                del matrix[i]
     return(matrix)
 
 # Direction, 0 for vertical, 1 for horizontal
@@ -147,15 +149,19 @@ def stitch_image_matrix(matrix):
     cv2.imwrite('output.jpeg', final_image)
 
 def main():
-    testminlat = 41.9086744
-    testminlon = -87.6818312
-    testmaxlat = 41.9097234
-    testmaxlon = -87.6823627
+    # testminlat = 41.9086744
+    # testminlon = -87.6818312
     # testmaxlat = 41.8097234
     # testmaxlon = -87.6023627
+    testminlat = 41.863771
+    testminlon = -87.618410
+    testmaxlat = 41.860802
+    testmaxlon = -87.614784
 
     matrix = get_tile_matrix(testminlat, testminlon, testmaxlat, testmaxlon, 19)
+    print(matrix)
     filtered_matrix = filter_matrix(matrix)
+    print(filtered_matrix)
     stitch_image_matrix(filtered_matrix)
 
 

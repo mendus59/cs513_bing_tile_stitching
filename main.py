@@ -72,7 +72,7 @@ def print_image(file_name):
     cv2.waitKey(0)
     cv2.destroyWindow('image')
 
-def get_tile_matrix(minLat, minLon, maxLat, maxLon, level):
+def get_tile_matrix(minLat, minLon, maxLat, maxLon, level=14):
     # Determine the number of degrees per tile at a given level
     lat_tiles_at_level = 180/math.pow(2, level)
     lon_tiles_at_level = 360/math.pow(2, level)
@@ -134,6 +134,7 @@ def stitch_image_matrix(matrix):
 
 def main():
     # Takes 5 arguments in the form minLat minLon maxLat maxLon level
+    # Level is optional. If no level is entered (between 1 and 23) it will default to 14
     # python main.py 41.9086744 -87.6818312 41.8097243 -87.6023617 14
 
     minLat = float(sys.argv[1])
